@@ -7,26 +7,52 @@ form.addEventListener('submit', (e) => {
 	const title = document.getElementById('title').value;
 	const author = document.getElementById('author').value;
 	const pages = document.getElementById('pages').value;
+	const hasRead = document.getElementById('read').checked;
 	let newKey = keyCounter + 1;
 	keyCounter = newKey;
-	addBookToLibrary(title, author, pages, newKey);
+	addBookToLibrary(title, author, pages, hasRead, newKey);
 	addCard();
 	e.preventDefault();
 });
 
-function addBookToLibrary(title, author, pages, key) {
-  	const newBook = new Book(title, author, pages, key);
+function addBookToLibrary(title, author, pages, read, key) {
+  	const newBook = new Book(title, author, pages, read, key);
   	myLibrary.push(newBook);
 }
 
-function Book(title, author, pages, key) {
+function Book(title, author, pages, read, key) {
   this.title = title;
   this.author = author;
   this.pages = pages;
+  this.read = read;
   this.key = key;
 }
 
-Book.prototype.removeCard = removeCard;
+function toggleRead (e) {
+	const selectedKey = e.target.parentNode.getAttribute('data-key');
+	const refArray = myLibrary;
+	const newLibraryArr = refArray.map(book => {
+		if (book.key == selectedKey) {
+			if (book.read == true) {
+				book.read = false;
+			} else {
+				book.read = true;
+			}
+			return book
+		}
+		return book
+	});
+	myLibrary = newLibraryArr;
+}
+
+function toggleReadDom (e) {
+	const selectedKey = e.target.parentNode.getAttribute('data-key');
+	const refArray = myLibrary;
+	const selectedBook = refArray.find(book => book.key == selectedKey);
+	const selectedCard = document.querySelector(`[data-key='${selectedKey}']`);
+	const selectedCardReadHead = selectedCard.querySelector('.hasRead');
+	selectedCardReadHead.innerHTML = `Has Been Read: ${selectedBook.read}`;
+}
 
 function addCard () {
 	const index = myLibrary.length-1; 
@@ -37,15 +63,18 @@ function addCard () {
 function removeCard (e) {
 	const selectedKey = e.target.parentNode.getAttribute('data-key');
 	const refArray = myLibrary;
-	const selectedBook = refArray.find(book => {
-		book.key == selectedKey
-	}); 
+	const newLibraryArr = refArray.filter(book => {
+		if (book.key != selectedKey) {
+			return book
+		}
+	});
+	myLibrary = newLibraryArr;
 	const selectedCard = document.querySelector(`[data-key='${selectedKey}']`);
 	selectedCard.parentNode.removeChild(selectedCard);
 }
 
 function createCard(book) {
-	const { title, author, pages, key } = book;
+	const { title, author, pages, read, key } = book;
 
 	const card = document.createElement('div');
 	card.classList.add('card');
@@ -68,11 +97,21 @@ function createCard(book) {
 		removeCard(e);
 	})
 
-	const hasRead = document.getElementById('read').checked;
+	const hasReadHead = document.createElement('h4');
+	hasReadHead.classList.add('hasRead');
+	hasReadHead.innerHTML = `Has Been Read: ${read}`;
+
+	const hasReadButton = document.createElement('button');
+	hasReadButton.addEventListener('click', (e) => {
+		toggleRead(e);
+		toggleReadDom(e);
+	})
 
 	card.appendChild(titleHead);
 	card.appendChild(authorHead);
 	card.appendChild(pagesHead);
+	card.appendChild(hasReadHead);
+	card.appendChild(hasReadButton);
 	card.appendChild(removeButton);
 	container.appendChild(card);
 }
